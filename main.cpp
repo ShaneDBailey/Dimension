@@ -10,13 +10,12 @@ int main(){
     //Vector3 center = model.getCenterOfOrigin();
     //model.translate(-center.x,-center.y,-center.z);
     std::cout << model.getCenterOfOrigin() << std::endl;
-    screen.camera.printFrustumWorldBounds();
     model.translate(0,0,5);
     model.find_origin();
     //screen.camera.lookAt(model.getCenterOfOrigin());
     screen.camera.setForward(model.getCenterOfOrigin()-screen.camera.getPosition());
     screen.camera.setViewMatrix();
-    screen.camera.setOrthographicProjectionMatrix(-10, 10, -10, 10, 1, 100);
+    screen.camera.setOrthographicProjectionMatrix(-10, 10, -10, 10, 0.1f, 1);
     //screen.camera.setProjectionMatrix();
     screen.camera.printFrustumWorldBounds();
 

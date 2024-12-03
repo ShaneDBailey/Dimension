@@ -27,7 +27,7 @@ public:
     float getAspectRatio() const { return aspectRatio; }
     float getNearPlane() const { return nearPlane; }
     float getFarPlane() const { return farPlane; }
-    
+    bool is_point_in_frustum(const Vector3& point) const;
 
     void setPosition(const Vector3& newPosition) { position = newPosition; }
     void setForward(const Vector3& newForward) { forward = newForward; }

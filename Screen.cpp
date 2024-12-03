@@ -41,6 +41,23 @@ void Screen::input() {
 
 /**/
 
+bool Screen::is_point_in_frustum(int x, int y, float z) {
+    // Convert the screen-space coordinates (x, y) back to camera space or normalized device coordinates
+    // (assuming your frustum checks are done in camera space or NDC).
+
+    // Check if the z value is within the frustum's near and far planes
+    if (z < camera.getNearPlane() || z > camera.getFarPlane()) {
+        return false;
+    }
+
+    // Check the x and y values against the frustum's left, right, top, and bottom planes
+    if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
+        return false;
+    }
+
+    // If all checks pass, the point is inside the frustum
+    return true;
+}
 
 void Screen::render_model(const Model& model) {
 
@@ -104,9 +121,11 @@ void Screen::render_model(const Model& model) {
                     if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT) {
                          if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) {
                             float z = barycentric_interpolation(x, y, vertex_0, vertex_1, vertex_2);
-                            if (z < zBuffer[x][y]) {
-                                zBuffer[x][y] = z;
-                                SDL_RenderDrawPointF(renderer, x, y);
+                            if(is_point_in_frustum(x,y,z)){
+                                if (z < zBuffer[x][y]) {
+                                    zBuffer[x][y] = z;
+                                    SDL_RenderDrawPointF(renderer, x, y);
+                                }
                             }
                         }
                     }
