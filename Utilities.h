@@ -8,10 +8,17 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 640;
 
+struct Color {
+    float r,g,b,a;
+};
+
+
 struct Vector3 {
     float x, y, z;
+
     Vector3() : x(0), y(0), z(0) {}
     Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
+
     Vector3 operator-() const {
         return {-x, -y, -z};
     }
@@ -75,18 +82,11 @@ struct Matrix4{
 
 Vector3 matrix_transform(const Matrix4& mat, const Vector3& vec);
 
-
-
-struct Color {
-    float r,g,b,a;
-};
-
 float barycentric_interpolation(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
 float dot_product(const Vector3& v1, const Vector3& v2);
 Vector3 cross_product(const Vector3& v1, const Vector3& v2);
 Vector3 normalize(const Vector3& v);
 bool is_point_inside_triangle(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
 std::tuple<float, float, float> barycentric_weights(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
-Vector3 reflect(const Vector3& I, const Vector3& N);
 
 #endif

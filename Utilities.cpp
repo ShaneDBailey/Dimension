@@ -1,6 +1,5 @@
 #include "Utilities.h"
 
-
 float dot_product(const Vector3& v1, const Vector3& v2) {
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
@@ -39,14 +38,6 @@ std::tuple<float, float, float> barycentric_weights(int x, int y, const Vector3&
     float gamma = 1.0f - alpha - beta;
     return std::make_tuple(alpha, beta, gamma);
 }
-
-Vector3 reflect(const Vector3& I, const Vector3& N) {
-    float dot = dot_product(I, N);
-    return {I.x - 2 * dot * N.x, I.y - 2 * dot * N.y, I.z - 2 * dot * N.z};
-}
-
-
-
 
 Vector3 matrix_transform(const Matrix4& mat, const Vector3& vec) {
     // Perform matrix-vector multiplication

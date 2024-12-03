@@ -3,38 +3,27 @@
 Camera::Camera(Vector3 position, Vector3 up, Vector3 forward, float fov, float aspectRatio, float nearPlane, float farPlane)
     : position(position), up(up), forward(forward), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {
     
-    // Normalize the forward and up directions first
-    forward = normalize(forward);  // Make sure forward is normalized
-    up = normalize(up);  // Normalize the up vector
-    
-    // Calculate the right direction based on forward and up vectors
-    right = cross_product(forward, up);
-    right = normalize(right);  // Normalize the right vector
-    
-    // Recalculate up vector to ensure orthogonality
-    up = cross_product(right, forward);
-    up = normalize(up);  // Ensure the up vector is orthogonal to right and forward
+    right = normalize(cross_product(forward, up));
     setViewMatrix();
-    //setProjectionMatrix();
+    setProjectionMatrix();
 }
 
 void Camera::setViewMatrix() {
-    // Normalize the direction vectors
+    forward = normalize(forward);
     right = normalize(cross_product(forward, up));
     up = normalize(cross_product(right, forward));
-    forward = normalize(forward);
 
     // Calculate the translation values
     float tx = -dot_product(right, position);
     float ty = -dot_product(up, position);
-    float tz = dot_product(forward, position);  // Inverted
+    float tz = dot_product(forward, position);
 
     // Construct the view matrix
     this->viewMatrix = Matrix4(
-        right.x, up.x, -forward.x, 0.0f,
-        right.y, up.y, -forward.y, 0.0f,
-        right.z, up.z, -forward.z, 0.0f,
-        tx, ty, -tz, 1.0f
+        right.x,  right.y,  right.z,  tx,  // First column: Right vector and translation
+        up.x,     up.y,     up.z,     ty,  // Second column: Up vector and translation
+        -forward.x, -forward.y, -forward.z, tz,  // Third column: Forward vector and translation (negated for camera space)
+        0.0f,     0.0f,     0.0f,     1.0f  // Fourth column: Homogeneous coordinate (for 3D transformation)
     );
 }
 
@@ -51,14 +40,15 @@ void Camera::setProjectionMatrix() {
     );
 }
 
-
-void Camera::lookAt(const Vector3& target) {
-    forward = normalize((target - position));
-    right = normalize(cross_product(forward,up));
-    up = normalize(cross_product(right,forward));
-    setViewMatrix();
+void Camera::setOrthographicProjectionMatrix(float left, float right, float bottom, float top, float near, float far) {
+    // Orthographic projection matrix
+    projectionMatrix = Matrix4(
+        2.0f / (right - left), 0.0f, 0.0f, -(right + left) / (right - left),
+        0.0f, 2.0f / (top - bottom), 0.0f, -(top + bottom) / (top - bottom),
+        0.0f, 0.0f, -2.0f / (far - near), -(far + near) / (far - near),
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
 }
-
 
 
 

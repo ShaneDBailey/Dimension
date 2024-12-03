@@ -1,11 +1,11 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include "Utilities.h"
 #include <vector>
 #include <numeric>
 #include <cmath>
 #include <iostream>
-#include "Utilities.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -30,7 +30,7 @@ struct Material{
     int illuminationModel;
 };
 
-struct Face { //triangles only
+struct Face { 
     int vertexIndex[3]; 
     int textureIndex[3]; 
     int normalIndex[3]; 
@@ -56,7 +56,7 @@ public:
     void find_origin();
     void rotate(float x, float y, float z);
     void translate(float x, float y, float z) ;
-    void scaleToRange(float range);
+    void scale(float scalar);
     void find_furthest_point();
 
     float furthest_point;
@@ -68,4 +68,4 @@ public:
     const Vector3& getCenterOfOrigin() const;
 };
 
-#endif // MODEL_H
+#endif 

@@ -27,6 +27,7 @@ public:
     float getAspectRatio() const { return aspectRatio; }
     float getNearPlane() const { return nearPlane; }
     float getFarPlane() const { return farPlane; }
+    
 
     void setPosition(const Vector3& newPosition) { position = newPosition; }
     void setForward(const Vector3& newForward) { forward = newForward; }
@@ -37,7 +38,7 @@ public:
 
     void setViewMatrix();
     void setProjectionMatrix();
-    void lookAt(const Vector3& target);
+    void setOrthographicProjectionMatrix(float left, float right, float bottom, float top, float near, float far);
     Matrix4 getViewMatrix() const{return viewMatrix;}
     Matrix4 getProjectionMatrix() const {return projectionMatrix;}
 

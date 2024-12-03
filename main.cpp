@@ -11,12 +11,18 @@ int main(){
     //model.translate(-center.x,-center.y,-center.z);
     std::cout << model.getCenterOfOrigin() << std::endl;
     screen.camera.printFrustumWorldBounds();
-    screen.camera.lookAt(Vector3(0,0,20));
     model.translate(0,0,5);
+    model.find_origin();
+    //screen.camera.lookAt(model.getCenterOfOrigin());
+    screen.camera.setForward(model.getCenterOfOrigin()-screen.camera.getPosition());
+    screen.camera.setViewMatrix();
+    screen.camera.setOrthographicProjectionMatrix(-10, 10, -10, 10, 1, 100);
+    //screen.camera.setProjectionMatrix();
+    screen.camera.printFrustumWorldBounds();
 
     while(true){
         screen.clear_display();
-        model.rotate(0.002,0.001,0.003);
+        model.rotate(0,0,0.003);
         screen.render_model(model);
         SDL_RenderPresent(screen.renderer);
         screen.input();

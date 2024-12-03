@@ -24,11 +24,12 @@ private:
     float zBuffer[SCREEN_WIDTH][SCREEN_HEIGHT];
 
 public:
-    Camera camera = Camera(Vector3(0, 0, -3), Vector3(0, 1, 0), Vector3(0, 0, 1), 60.0f, 1.0f , 0.1f, 10.0f);
+    Camera camera = Camera(Vector3(0, 2, -5), Vector3(0, 1, 0), Vector3(0, 0, -1), 45.0f, 1.0f , 0.1f, 10.0f);
     SDL_Renderer* renderer;
     Screen();
     ~Screen();
     void render_model(const Model& model);
+    void draw_line(const Vector3& start, const Vector3& end);
     
     void clear_display();
     void input();

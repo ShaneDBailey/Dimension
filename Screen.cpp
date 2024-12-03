@@ -22,7 +22,7 @@ void Screen::clear_display() {
     SDL_RenderClear(renderer);
     for (int i = 0; i < SCREEN_WIDTH; ++i) {
         for (int j = 0; j < SCREEN_HEIGHT; ++j) {
-            zBuffer[i][j] = std::numeric_limits<float>::min();
+            zBuffer[i][j] = std::numeric_limits<float>::max();
         }
     }
 }
@@ -39,41 +39,83 @@ void Screen::input() {
 
 
 
+/**/
 
 
 void Screen::render_model(const Model& model) {
-    // Step 1: Get the model's vertices
-    const std::vector<Vector3>& vertices = model.getVertices();
-    
-    // Iterate through all vertices in the model
-    for (const Vector3& vertex : vertices) {
-        
-        // Step 2: Transform the vertex using the camera's view matrix
-        Vector3 transformedVertex = vertex;
-        
-        // Apply the view matrix (transform to camera space)
-        transformedVertex = matrix_transform(camera.getViewMatrix(), transformedVertex);
-        
-        // Step 3: Apply the projection matrix (transform to normalized device coordinates)
-        Vector3 projectedVertex = matrix_transform(camera.getProjectionMatrix(), transformedVertex);
 
-        // Step 4: Perform the perspective divide to map to NDC (Normalized Device Coordinates)
-        // Perspective divide: Divide by w (we assume w is stored in `projectedVertex.z` after projection)
-        if (projectedVertex.z != 0.0f) {
-            projectedVertex.x /= projectedVertex.z;  // Normalize x
-            projectedVertex.y /= projectedVertex.z;  // Normalize y
-            // The z value can be used for depth testing, but we won't need it for this basic rendering
+    Vector3 light_direction{1, 0, -1}; //must be between -1 and 1
+    light_direction = normalize(light_direction);
+
+
+    for(const auto& face : model.getFaces()){
+        Vector3 vertex_0 = matrix_transform(camera.getViewMatrix(),model.getVertices()[face.vertexIndex[0] -1]); 
+        Vector3 vertex_1 = matrix_transform(camera.getViewMatrix(),model.getVertices()[face.vertexIndex[1] -1]);
+        Vector3 vertex_2 = matrix_transform(camera.getViewMatrix(),model.getVertices()[face.vertexIndex[2] -1]);
+
+        vertex_0 = matrix_transform(camera.getProjectionMatrix(), vertex_0);
+        vertex_1 = matrix_transform(camera.getProjectionMatrix(), vertex_1);
+        vertex_2 = matrix_transform(camera.getProjectionMatrix(), vertex_2);
+
+        float z_0 = dot_product(camera.getForward(), vertex_0); 
+        float z_1 = dot_product(camera.getForward(), vertex_1);
+        float z_2 = dot_product(camera.getForward(), vertex_2);
+
+        vertex_0.z = z_0;
+        vertex_1.z = z_1;
+        vertex_2.z = z_2;
+
+        vertex_0 = Vector3(
+            (vertex_0.x * 0.5f + 0.5f) * SCREEN_WIDTH,
+            (-vertex_0.y * 0.5f + 0.5f) * SCREEN_HEIGHT,
+            vertex_0.z
+        );
+        vertex_1 = Vector3(
+            (vertex_1.x * 0.5f + 0.5f) * SCREEN_WIDTH,
+            (-vertex_1.y * 0.5f + 0.5f) * SCREEN_HEIGHT,
+            vertex_1.z
+        );
+        vertex_2 = Vector3(
+            (vertex_2.x * 0.5f + 0.5f) * SCREEN_WIDTH,
+            (-vertex_2.y * 0.5f + 0.5f) * SCREEN_HEIGHT,
+            vertex_2.z
+        );
+
+        const Vector3& face_normal = model.getNormals()[face.normalIndex[0] - 1];
+
+        float brightness = dot_product(light_direction, face_normal);
+        brightness = std::max(0.0f, brightness);  
+
+        Color color = face.face_material.diffuseColor;
+        color.r *= brightness;
+        color.g *= brightness;
+        color.b *= brightness;
+
+        SDL_SetRenderDrawColor(renderer, color.r * 255, color.g * 255, color.b * 255, color.a * 255);
+
+        int min_x = std::min({vertex_0.x, vertex_1.x, vertex_2.x}); 
+        int min_y = std::min({vertex_0.y, vertex_1.y, vertex_2.y}); 
+        int max_x = std::max({vertex_0.x, vertex_1.x, vertex_2.x}); 
+        int max_y = std::max({vertex_0.y, vertex_1.y, vertex_2.y}); 
+
+        for (int y = min_y; y <= max_y; ++y) { 
+            for (int x = min_x; x <= max_x; ++x) { 
+                if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) { 
+                    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT) {
+                         if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) {
+                            float z = barycentric_interpolation(x, y, vertex_0, vertex_1, vertex_2);
+                            if (z < zBuffer[x][y]) {
+                                zBuffer[x][y] = z;
+                                SDL_RenderDrawPointF(renderer, x, y);
+                            }
+                        }
+                    }
+                } 
+            }
         }
-
-        // Step 5: Map the 3D NDC to 2D screen coordinates
-        int screenX = static_cast<int>((transformedVertex.x * 0.5f + 0.5f) * SCREEN_WIDTH);  // X mapped to screen width
-        int screenY = static_cast<int>((-transformedVertex.y * 0.5f + 0.5f) * SCREEN_HEIGHT); // Y mapped to screen height
-
-        // Step 6: Draw the point on the screen
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Set color to red
-        SDL_RenderDrawPoint(renderer, screenX, screenY);   // Draw the point
     }
 }
+
 
 
 

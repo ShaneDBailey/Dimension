@@ -224,6 +224,15 @@ void Model::rotate(float x, float y, float z){
     }
 }
 
+void Model::scale(float scalar){
+    for (auto& vertex : this->vertices){
+        vertex.x = vertex.x * scalar;
+        vertex.y = vertex.y * scalar;
+        vertex.z = vertex.z * scalar;
+    }
+    find_origin();
+}
+
 void Model::translate(float x, float y, float z) {
     // Translate all vertices by the given offset
     for (auto& vertex : vertices) {
@@ -231,27 +240,10 @@ void Model::translate(float x, float y, float z) {
         vertex.y += y;
         vertex.z += z;
     }
-
-    // Also, update the center of origin
-    center_of_origin.x += x;
-    center_of_origin.y += y;
-    center_of_origin.z += z;
-}
-
-
-void Model::scaleToRange(float range) {
-    find_furthest_point();
-
-    // Scale the vertices so that the furthest point is within the specified range
-    for (auto& vertex : this->vertices) {
-            vertex.x *= range;
-            vertex.y *= range;
-            vertex.z *= range;
-        }
-
-    // Recalculate the center of origin after scaling
     find_origin();
 }
+
+
 
 const std::vector<Vector3>& Model::getVertices() const { return vertices; }
 
