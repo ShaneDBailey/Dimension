@@ -39,20 +39,16 @@ std::tuple<float, float, float> barycentric_weights(int x, int y, const Vector3&
     return std::make_tuple(alpha, beta, gamma);
 }
 
-Vector3 matrix_transform(const Matrix4& mat, const Vector3& vec) {
-    // Perform matrix-vector multiplication
-    // Treat the vector as (x, y, z, 1) for affine transformations
-    float x = vec.x * mat.matrix[0][0] + vec.y * mat.matrix[0][1] + vec.z * mat.matrix[0][2] + 1.0f * mat.matrix[0][3];
-    float y = vec.x * mat.matrix[1][0] + vec.y * mat.matrix[1][1] + vec.z * mat.matrix[1][2] + 1.0f * mat.matrix[1][3];
-    float z = vec.x * mat.matrix[2][0] + vec.y * mat.matrix[2][1] + vec.z * mat.matrix[2][2] + 1.0f * mat.matrix[2][3];
-    float w = vec.x * mat.matrix[3][0] + vec.y * mat.matrix[3][1] + vec.z * mat.matrix[3][2] + 1.0f * mat.matrix[3][3];
+Vector4 matrix_transform(const Matrix4& mat, const Vector4& vec) {
+    float x = vec.x * mat.matrix[0][0] + vec.y * mat.matrix[0][1] + vec.z * mat.matrix[0][2] + vec.w * mat.matrix[0][3];
+    float y = vec.x * mat.matrix[1][0] + vec.y * mat.matrix[1][1] + vec.z * mat.matrix[1][2] + vec.w * mat.matrix[1][3];
+    float z = vec.x * mat.matrix[2][0] + vec.y * mat.matrix[2][1] + vec.z * mat.matrix[2][2] + vec.w * mat.matrix[2][3];
+    float w = vec.x * mat.matrix[3][0] + vec.y * mat.matrix[3][1] + vec.z * mat.matrix[3][2] + vec.w * mat.matrix[3][3];
 
-    // If w is not zero, divide by w to handle perspective projection
-    if (w != 0) {
-        x /= w;
-        y /= w;
-        z /= w;
-    }
+    return Vector4(x, y, z, w);  // Return the transformed 4D vector
+}
 
-    return Vector3(x, y, z);  // Return the transformed 3D vector
+// Optional: Function to convert Vector3 to Vector4
+Vector4 to_vector4(const Vector3& vec) {
+    return Vector4(vec.x, vec.y, vec.z, 1.0f);  // Set w = 1 for normal 3D points
 }

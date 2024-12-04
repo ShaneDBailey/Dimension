@@ -6,7 +6,7 @@ Screen::Screen() {
     SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer);
     for (int i = 0; i < SCREEN_WIDTH; ++i) {
         for (int j = 0; j < SCREEN_HEIGHT; ++j) {
-            zBuffer[i][j] = std::numeric_limits<float>::min();
+            zBuffer[i][j] = std::numeric_limits<float>::max();
         }
     }
 }
@@ -41,23 +41,7 @@ void Screen::input() {
 
 /**/
 
-bool Screen::is_point_in_frustum(int x, int y, float z) {
-    // Convert the screen-space coordinates (x, y) back to camera space or normalized device coordinates
-    // (assuming your frustum checks are done in camera space or NDC).
 
-    // Check if the z value is within the frustum's near and far planes
-    if (z < camera.getNearPlane() || z > camera.getFarPlane()) {
-        return false;
-    }
-
-    // Check the x and y values against the frustum's left, right, top, and bottom planes
-    if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
-        return false;
-    }
-
-    // If all checks pass, the point is inside the frustum
-    return true;
-}
 
 void Screen::render_model(const Model& model) {
 
@@ -66,14 +50,25 @@ void Screen::render_model(const Model& model) {
 
 
     for(const auto& face : model.getFaces()){
-        Vector3 vertex_0 = matrix_transform(camera.getViewMatrix(),model.getVertices()[face.vertexIndex[0] -1]); 
-        Vector3 vertex_1 = matrix_transform(camera.getViewMatrix(),model.getVertices()[face.vertexIndex[1] -1]);
-        Vector3 vertex_2 = matrix_transform(camera.getViewMatrix(),model.getVertices()[face.vertexIndex[2] -1]);
+        //grab vertices, and transform them so that the camera is at 0,0,0, converted to homenzgous vector 4 for matrix math
+        Vector4 vertex_0_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.getVertices()[face.vertexIndex[0] - 1])); 
+        Vector4 vertex_1_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.getVertices()[face.vertexIndex[1] - 1])); 
+        Vector4 vertex_2_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.getVertices()[face.vertexIndex[2] - 1])); 
 
-        vertex_0 = matrix_transform(camera.getProjectionMatrix(), vertex_0);
-        vertex_1 = matrix_transform(camera.getProjectionMatrix(), vertex_1);
-        vertex_2 = matrix_transform(camera.getProjectionMatrix(), vertex_2);
+        // project the coned frustrum so it is in a cube shape, this will give the appearance of objects closer to camera being bigger
+        //and objects farther away being smaller
+        vertex_0_4 = matrix_transform(camera.getProjectionMatrix(), vertex_0_4);
+        vertex_1_4 = matrix_transform(camera.getProjectionMatrix(), vertex_1_4);
+        vertex_2_4 = matrix_transform(camera.getProjectionMatrix(), vertex_2_4);
 
+        //TODO:: Decide clip logic -> create the multiple triangles, and then for each new triangle do the following below
+
+        // normalizes the cube to be a 1 by 1 by 1
+        Vector3 vertex_0 = {vertex_0_4.x / vertex_0_4.w, vertex_0_4.y / vertex_0_4.w, vertex_0_4.z / vertex_0_4.w};
+        Vector3 vertex_1 = {vertex_1_4.x / vertex_1_4.w, vertex_1_4.y / vertex_1_4.w, vertex_1_4.z / vertex_1_4.w};
+        Vector3 vertex_2 = {vertex_2_4.x / vertex_2_4.w, vertex_2_4.y / vertex_2_4.w, vertex_2_4.z / vertex_2_4.w};
+
+        //maps the 1 by 1 by cuber to the screen
         float z_0 = dot_product(camera.getForward(), vertex_0); 
         float z_1 = dot_product(camera.getForward(), vertex_1);
         float z_2 = dot_product(camera.getForward(), vertex_2);
@@ -83,85 +78,51 @@ void Screen::render_model(const Model& model) {
         vertex_2.z = z_2;
 
         vertex_0 = Vector3(
-            (vertex_0.x * 0.5f + 0.5f) * SCREEN_WIDTH,
-            (-vertex_0.y * 0.5f + 0.5f) * SCREEN_HEIGHT,
+            (vertex_0.x + 1.0f) * SCREEN_WIDTH / 2,
+            (1.0f - vertex_0.y) * SCREEN_HEIGHT / 2,
             vertex_0.z
         );
         vertex_1 = Vector3(
-            (vertex_1.x * 0.5f + 0.5f) * SCREEN_WIDTH,
-            (-vertex_1.y * 0.5f + 0.5f) * SCREEN_HEIGHT,
+            (vertex_1.x + 1.0f) * SCREEN_WIDTH / 2,
+            (1.0f - vertex_1.y) * SCREEN_HEIGHT / 2,
             vertex_1.z
         );
         vertex_2 = Vector3(
-            (vertex_2.x * 0.5f + 0.5f) * SCREEN_WIDTH,
-            (-vertex_2.y * 0.5f + 0.5f) * SCREEN_HEIGHT,
+            (vertex_2.x + 1.0f) * SCREEN_WIDTH / 2,
+            (1.0f - vertex_2.y) * SCREEN_HEIGHT / 2,
             vertex_2.z
         );
 
+        //decide the color for the face
         const Vector3& face_normal = model.getNormals()[face.normalIndex[0] - 1];
-
         float brightness = dot_product(light_direction, face_normal);
         brightness = std::max(0.0f, brightness);  
-
         Color color = face.face_material.diffuseColor;
         color.r *= brightness;
         color.g *= brightness;
         color.b *= brightness;
-
         SDL_SetRenderDrawColor(renderer, color.r * 255, color.g * 255, color.b * 255, color.a * 255);
 
-        int min_x = std::min({vertex_0.x, vertex_1.x, vertex_2.x}); 
-        int min_y = std::min({vertex_0.y, vertex_1.y, vertex_2.y}); 
-        int max_x = std::max({vertex_0.x, vertex_1.x, vertex_2.x}); 
-        int max_y = std::max({vertex_0.y, vertex_1.y, vertex_2.y}); 
 
-        for (int y = min_y; y <= max_y; ++y) { 
-            for (int x = min_x; x <= max_x; ++x) { 
-                if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) { 
-                    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT) {
-                         if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) {
-                            float z = barycentric_interpolation(x, y, vertex_0, vertex_1, vertex_2);
-                            if(is_point_in_frustum(x,y,z)){
-                                if (z < zBuffer[x][y]) {
-                                    zBuffer[x][y] = z;
-                                    SDL_RenderDrawPointF(renderer, x, y);
-                                }
-                            }
-                        }
+        //if minimizes the check area to be on the screen and no bigger than the triangle this is for efficenacy
+        int min_x = std::max(0, std::min({static_cast<int>(vertex_0.x), static_cast<int>(vertex_1.x), static_cast<int>(vertex_2.x)}));
+        int min_y = std::max(0, std::min({static_cast<int>(vertex_0.y), static_cast<int>(vertex_1.y), static_cast<int>(vertex_2.y)}));
+        int max_x = std::min(SCREEN_WIDTH - 1, std::max({static_cast<int>(vertex_0.x), static_cast<int>(vertex_1.x), static_cast<int>(vertex_2.x)}));
+        int max_y = std::min(SCREEN_HEIGHT - 1, std::max({static_cast<int>(vertex_0.y), static_cast<int>(vertex_1.y), static_cast<int>(vertex_2.y)}));
+
+         for (int y = min_y; y <= max_y; ++y) {
+            for (int x = min_x; x <= max_x; ++x) {
+                if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) {//check if the pixel from the area to render is in the triangle
+                    float z = barycentric_interpolation(x, y, vertex_0, vertex_1, vertex_2);//determine z depth on all points as only the vertexes have a z value
+                    if (z < zBuffer[x][y]) {//check the zbuffer if its on top render that pixel and store it
+                        zBuffer[x][y] = z;
+                        SDL_RenderDrawPointF(renderer, x, y);
                     }
-                } 
+                }
             }
-        }
+         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 void Screen::lookAround() {

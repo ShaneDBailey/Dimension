@@ -24,17 +24,15 @@ private:
     float zBuffer[SCREEN_WIDTH][SCREEN_HEIGHT];
 
 public:
-    Camera camera = Camera(Vector3(0, 5, 0), Vector3(0, 1, 0), Vector3(0, 0, -1), 45.0f, 1.0f , 0.1f, 10.0f);
+    Camera camera = Camera(Vector3(15, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, -1), 45.0f, 1.0f , 0.5f, 10.0f);
     SDL_Renderer* renderer;
     Screen();
     ~Screen();
     void render_model(const Model& model);
-    void draw_line(const Vector3& start, const Vector3& end);
-    bool is_point_in_frustum(int x, int y, float z);
     
     void clear_display();
     void input();
-    void lookAround() ;
+    void lookAround();
 };
 
 #endif // SCREEN_H

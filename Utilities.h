@@ -37,8 +37,6 @@ struct Vector3 {
             float invScalar = 1.0f / scalar;
             return {x * invScalar, y * invScalar, z * invScalar};
         } else {
-            // Handle division by zero gracefully
-            // You might want to log an error or throw an exception here
             return {0, 0, 0};
         }
     }
@@ -49,6 +47,30 @@ struct Vector3 {
 
     friend std::ostream& operator<<(std::ostream& os, const Vector3& vec) {
         os << "(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
+        return os;
+    }
+};
+
+struct Vector4 {
+    float x, y, z, w;
+
+    Vector4() : x(0), y(0), z(0), w(1) {}  // Default constructor, w = 1 for normal 3D points
+    Vector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+
+    Vector4 operator+(const Vector4& other) const {
+        return {x + other.x, y + other.y, z + other.z, w + other.w};
+    }
+
+    Vector4 operator-(const Vector4& other) const {
+        return {x - other.x, y - other.y, z - other.z, w - other.w};
+    }
+
+    Vector4 operator*(float scalar) const {
+        return {x * scalar, y * scalar, z * scalar, w * scalar};
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Vector4& vec) {
+        os << "(" << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << ")";
         return os;
     }
 };
@@ -80,7 +102,8 @@ struct Matrix4{
 
 
 
-Vector3 matrix_transform(const Matrix4& mat, const Vector3& vec);
+Vector4 matrix_transform(const Matrix4& mat, const Vector4& vec);
+Vector4 to_vector4(const Vector3& vec);
 
 float barycentric_interpolation(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
 float dot_product(const Vector3& v1, const Vector3& v2);

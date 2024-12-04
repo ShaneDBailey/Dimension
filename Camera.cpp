@@ -4,8 +4,7 @@ Camera::Camera(Vector3 position, Vector3 up, Vector3 forward, float fov, float a
     : position(position), up(up), forward(forward), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {
     
     right = normalize(cross_product(forward, up));
-    setViewMatrix();
-    setProjectionMatrix();
+    updateViews();
 }
 
 void Camera::setViewMatrix() {
@@ -35,89 +34,87 @@ void Camera::setProjectionMatrix() {
     projectionMatrix = Matrix4(
         1.0f / (aspectRatio * tanHalfFov), 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
-        0.0f, 0.0f, -(farPlane + nearPlane) / zRange, -1.0f,
-        0.0f, 0.0f, -2.0f * farPlane * nearPlane / zRange, 0.0f
+        0.0f, 0.0f, (farPlane + nearPlane) / zRange, -1.0f,
+        0.0f, 0.0f, 2.0f * farPlane * nearPlane / zRange, 0.0f
     );
 }
 
-void Camera::setOrthographicProjectionMatrix(float left, float right, float bottom, float top, float near, float far) {
-    // Orthographic projection matrix
-    projectionMatrix = Matrix4(
-        2.0f / (right - left), 0.0f, 0.0f, -(right + left) / (right - left),
-        0.0f, 2.0f / (top - bottom), 0.0f, -(top + bottom) / (top - bottom),
-        0.0f, 0.0f, -2.0f / (far - near), -(far + near) / (far - near),
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
-}
-
-
-
-#include <cmath>
-#include <iostream>
-
-void Camera::printFrustumWorldBounds() {
-    // Calculate the half-width and half-height of the frustum at the near plane
-    float tanHalfFOV = std::tan(fov * 0.5f * M_PI / 180.0f);
-    float nearHeight = nearPlane * tanHalfFOV;
+void Camera::defineViewingVolume() {
+    // We calculate the corners of the frustum based on the camera's position, the view direction, and the near/far planes
+    float tanHalfFov = tanf(fov / 2.0f);
+    float nearHeight = 2.0f * tanHalfFov * nearPlane;
     float nearWidth = nearHeight * aspectRatio;
-
-    // Calculate the half-width and half-height of the frustum at the far plane
-    float farHeight = farPlane * tanHalfFOV;
+    float farHeight = 2.0f * tanHalfFov * farPlane;
     float farWidth = farHeight * aspectRatio;
 
-    // Camera's position is at (0, 0, -10) and near plane at z = -9.9
-    float nearPlanePosition = -10.0f + nearPlane;
+    // Calculate the direction vectors for the near and far planes
+    Vector3 centerNear = position + forward * nearPlane;
+    Vector3 centerFar = position + forward * farPlane;
 
-    // Frustum corners in camera space (relative to camera position)
+    // Calculate the four corners of the near plane
+    ViewingVolume.close_corners[0] = centerNear + (right * nearWidth * 0.5f) - (up * nearHeight * 0.5f);
+    ViewingVolume.close_corners[1] = centerNear + (right * nearWidth * 0.5f) + (up * nearHeight * 0.5f);
+    ViewingVolume.close_corners[2] = centerNear - (right * nearWidth * 0.5f) + (up * nearHeight * 0.5f);
+    ViewingVolume.close_corners[3] = centerNear - (right * nearWidth * 0.5f) - (up * nearHeight * 0.5f);
 
-    // Near plane (at nearPlanePosition distance)
-    Vector3 nearTopLeft(-nearWidth, nearHeight, nearPlanePosition);
-    Vector3 nearTopRight(nearWidth, nearHeight, nearPlanePosition);
-    Vector3 nearBottomLeft(-nearWidth, -nearHeight, nearPlanePosition);
-    Vector3 nearBottomRight(nearWidth, -nearHeight, nearPlanePosition);
+    // Calculate the four corners of the far plane
+    ViewingVolume.far_corners[0] = centerFar + (right * farWidth * 0.5f) - (up * farHeight * 0.5f);
+    ViewingVolume.far_corners[1] = centerFar + (right * farWidth * 0.5f) + (up * farHeight * 0.5f);
+    ViewingVolume.far_corners[2] = centerFar - (right * farWidth * 0.5f) + (up * farHeight * 0.5f);
+    ViewingVolume.far_corners[3] = centerFar - (right * farWidth * 0.5f) - (up * farHeight * 0.5f);
+}
 
-    // Far plane (at farPlane distance)
-    Vector3 farTopLeft(-farWidth, farHeight, -farPlane);
-    Vector3 farTopRight(farWidth, farHeight, -farPlane);
-    Vector3 farBottomLeft(-farWidth, -farHeight, -farPlane);
-    Vector3 farBottomRight(farWidth, -farHeight, -farPlane);
+bool Camera::is_point_in_viewing_volume(const Vector3& point) const {
+    // This function checks if the given point lies within the viewing frustum
+    // We do this by testing the point against the six planes (left, right, top, bottom, near, far)
 
-    // Print the 8 frustum corners in camera space
-    std::cout << "Frustum Corners in Camera Space:" << std::endl;
-    std::cout << "Near Plane:" << std::endl;
-    std::cout << "Top Left: " << nearTopLeft << std::endl;
-    std::cout << "Top Right: " << nearTopRight << std::endl;
-    std::cout << "Bottom Left: " << nearBottomLeft << std::endl;
-    std::cout << "Bottom Right: " << nearBottomRight << std::endl;
+    // Plane normal directions are derived from cross products of frustum edges
+    // Near and Far planes
+    Vector3 nearNormal = normalize(cross_product(ViewingVolume.close_corners[1] - ViewingVolume.close_corners[0],
+                                                 ViewingVolume.close_corners[2] - ViewingVolume.close_corners[0]));
+    Vector3 farNormal = normalize(cross_product(ViewingVolume.far_corners[1] - ViewingVolume.far_corners[0],
+                                                ViewingVolume.far_corners[2] - ViewingVolume.far_corners[0]));
 
-    std::cout << "Far Plane:" << std::endl;
-    std::cout << "Top Left: " << farTopLeft << std::endl;
-    std::cout << "Top Right: " << farTopRight << std::endl;
-    std::cout << "Bottom Left: " << farBottomLeft << std::endl;
-    std::cout << "Bottom Right: " << farBottomRight << std::endl;
+    // Check if the point is behind the near or far plane
+    if (dot_product(nearNormal, point - position) > 0.0f || dot_product(farNormal, point - position) < 0.0f) {
+        return false;
+    }
 
-    // Transform the corners to world space using the camera's view matrix
-    Vector3 nearTopLeftWorld = matrix_transform(viewMatrix, nearTopLeft);
-    Vector3 nearTopRightWorld = matrix_transform(viewMatrix, nearTopRight);
-    Vector3 nearBottomLeftWorld = matrix_transform(viewMatrix, nearBottomLeft);
-    Vector3 nearBottomRightWorld = matrix_transform(viewMatrix, nearBottomRight);
+    // For left, right, top, and bottom planes
+    for (int i = 0; i < 4; ++i) {
+        // Compute edge vectors for the near and far planes
+        Vector3 edgeNear = ViewingVolume.close_corners[(i + 1) % 4] - ViewingVolume.close_corners[i];
+        Vector3 edgeFar = ViewingVolume.far_corners[(i + 1) % 4] - ViewingVolume.far_corners[i];
 
-    Vector3 farTopLeftWorld = matrix_transform(viewMatrix, farTopLeft);
-    Vector3 farTopRightWorld = matrix_transform(viewMatrix, farTopRight);
-    Vector3 farBottomLeftWorld = matrix_transform(viewMatrix, farBottomLeft);
-    Vector3 farBottomRightWorld = matrix_transform(viewMatrix, farBottomRight);
+        // Calculate the normal of the planes
+        Vector3 normalNear = normalize(cross_product(edgeNear, ViewingVolume.close_corners[i] - point));
+        Vector3 normalFar = normalize(cross_product(edgeFar, ViewingVolume.far_corners[i] - point));
 
-    // Print the 8 frustum corners in world space
-    std::cout << "Frustum Corners in World Space:" << std::endl;
-    std::cout << "Near Plane:" << std::endl;
-    std::cout << "Top Left: " << nearTopLeftWorld << std::endl;
-    std::cout << "Top Right: " << nearTopRightWorld << std::endl;
-    std::cout << "Bottom Left: " << nearBottomLeftWorld << std::endl;
-    std::cout << "Bottom Right: " << nearBottomRightWorld << std::endl;
+        // Check if the point is inside all planes
+        if (dot_product(normalNear, forward) > 0.0f || dot_product(normalFar, forward) > 0.0f) {
+            return false;
+        }
+    }
 
-    std::cout << "Far Plane:" << std::endl;
-    std::cout << "Top Left: " << farTopLeftWorld << std::endl;
-    std::cout << "Top Right: " << farTopRightWorld << std::endl;
-    std::cout << "Bottom Left: " << farBottomLeftWorld << std::endl;
-    std::cout << "Bottom Right: " << farBottomRightWorld << std::endl;
+    return true;
+}
+
+void Camera::updateViews(){
+    setViewMatrix();
+    setProjectionMatrix();
+    defineViewingVolume();
+}
+
+void Camera::printFrustumWorldBounds() {
+    std::cout << "Frustum Near Corners:" << std::endl;
+    for (int i = 0; i < 4; i++) {
+        std::cout << "Close Corner " << i << ": (" << ViewingVolume.close_corners[i].x << ", " 
+                  << ViewingVolume.close_corners[i].y << ", " << ViewingVolume.close_corners[i].z << ")" << std::endl;
+    }
+
+    std::cout << "Frustum Far Corners:" << std::endl;
+    for (int i = 0; i < 4; i++) {
+        std::cout << "Far Corner " << i << ": (" << ViewingVolume.far_corners[i].x << ", " 
+                  << ViewingVolume.far_corners[i].y << ", " << ViewingVolume.far_corners[i].z << ")" << std::endl;
+    }
 }
