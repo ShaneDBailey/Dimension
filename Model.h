@@ -1,71 +1,105 @@
+/*
+Author: Shane Bailey
+
+File Description:
+- This file is a layout of the model class, it contains all the components
+- a 3D model would have, and associated functions for the 3D model/material
+
+Library Resources:
+
+Important References:
+- https://en.wikipedia.org/wiki/Wavefront_.obj_file
+*/
+
+
 #ifndef MODEL_H
 #define MODEL_H
-
+//Standard C Libraries
+#include <vector>   //lists
+#include <cmath>    //additional math functions
+#include <iostream> //inpupt and output streams
+#include <fstream>  //hangles reading files
+#include <sstream>  //operations for strings
+#include <string>   //strings
+//Created Files
 #include "Utilities.h"
-#include <vector>
-#include <numeric>
-#include <cmath>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <string>
-
-
-struct Vertex_Texture {
-    float start, end;
+//-----------------------------------Data_Structures----------------------
+struct Group {
+    std::string name;
+    std::vector<Model> child_models;
 };
 
+struct UV {
+    float u, v;
+};
+
+struct Texture {
+    std::string file_path;
+};
+
+struct Keyframe {
+    float time;
+    Vector3 translation;
+    Vector4 rotation;
+    Vector3 scale;
+};
+
+struct Bone {
+    std::string name;
+    Matrix4 bind_pose;
+    std::vector<int> child_bones;
+};
 
 struct Material{
     std::string name;
-    Color ambientColor;
-    Color diffuseColor;
-    Color specularColor;
-    Color emissiveColor;
+    Color ambient_color;
+    Color diffuse_color;
+    Color specular_color;
+    Color emissive_color;
 
-    float specularExponent;
-    float opticalDensity;
-    float dissolveFactor;
-    int illuminationModel;
+    float specular_exponent;
+    float optical_density;
+    float dissolve_factor;
+    int illumination_model;
 };
 
 struct Face { 
-    int vertexIndex[3]; 
-    int textureIndex[3]; 
-    int normalIndex[3]; 
+    int vertex_index[3]; 
+    int texture_index[3]; 
+    int normal_index[3]; 
     Material& face_material;
 
     Face(Material& material) : face_material(material) {}
 };
-
+//----------------------------------------Model_Class-----------------------------
 class Model {
-private:
-    std::vector<Vector3> vertices;
-    std::vector<Vertex_Texture> textures;
-    std::vector<Vector3> normals;
-    std::vector<Material> materials;
-    std::vector<Face> faces;
+    private:
+        std::vector<Vector3> vertices;
+        std::vector<Face> faces;
+        std::vector<Vector3> normals;
+        std::vector<Material> materials;
 
-    Vector3 center_of_origin;
+        Vector3 center_of_origin;
 
-public:
-    Model();
-    Model(const std::string& objFilePath, const std::string& mtlFilePath) ;
-    void normalize_vertices();
-    void find_origin();
-    void rotate(float x, float y, float z);
-    void translate(float x, float y, float z) ;
-    void scale(float scalar);
-    void find_furthest_point();
+    public:
+        void find_origin();
+        
+        void rotate(float x, float y, float z);
+        void rotate_around_point(float x, float y, float z, Vector3 point);
+        void translate(float x, float y, float z) ;
+        void scale(float scalar);
 
-    float furthest_point;
+        const std::vector<Vector3>& get_vertices() const;
+        const std::vector<Face>& get_faces() const;
+        const std::vector<Vector3>& get_normals() const;
+        std::vector<Material> get_materials() const;
 
-    const std::vector<Vector3>& getVertices() const;
-    const std::vector<Vertex_Texture>& getTextures() const;
-    const std::vector<Vector3>& getNormals() const;
-    const std::vector<Face>& getFaces() const;
-    const Vector3& getCenterOfOrigin() const;
+        const Vector3& get_center_of_origin() const;
+
+        void add_vertex(Vector3 vertex);
+        void add_face(Face face);
+        void add_normal(Vector3 normal);
+        void add_material(Material material);
 };
 
 #endif 

@@ -24,7 +24,7 @@ private:
     float zBuffer[SCREEN_WIDTH][SCREEN_HEIGHT];
 
 public:
-    Camera camera = Camera(Vector3(15, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, -1), 45.0f, 1.0f , 0.5f, 10.0f);
+    Camera camera = Camera(Vector3(20, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, -1), 45.0f, 1.0f , 0.5f, 10.0f);
     SDL_Renderer* renderer;
     Screen();
     ~Screen();

@@ -49,11 +49,11 @@ void Screen::render_model(const Model& model) {
     light_direction = normalize(light_direction);
 
 
-    for(const auto& face : model.getFaces()){
+    for(const auto& face : model.get_faces()){
         //grab vertices, and transform them so that the camera is at 0,0,0, converted to homenzgous vector 4 for matrix math
-        Vector4 vertex_0_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.getVertices()[face.vertexIndex[0] - 1])); 
-        Vector4 vertex_1_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.getVertices()[face.vertexIndex[1] - 1])); 
-        Vector4 vertex_2_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.getVertices()[face.vertexIndex[2] - 1])); 
+        Vector4 vertex_0_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[0] - 1])); 
+        Vector4 vertex_1_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[1] - 1])); 
+        Vector4 vertex_2_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[2] - 1])); 
 
         // project the coned frustrum so it is in a cube shape, this will give the appearance of objects closer to camera being bigger
         //and objects farther away being smaller
@@ -94,10 +94,10 @@ void Screen::render_model(const Model& model) {
         );
 
         //decide the color for the face
-        const Vector3& face_normal = model.getNormals()[face.normalIndex[0] - 1];
+        const Vector3& face_normal = model.get_normals()[face.normal_index[0] - 1];
         float brightness = dot_product(light_direction, face_normal);
         brightness = std::max(0.0f, brightness);  
-        Color color = face.face_material.diffuseColor;
+        Color color = face.face_material.diffuse_color;
         color.r *= brightness;
         color.g *= brightness;
         color.b *= brightness;
