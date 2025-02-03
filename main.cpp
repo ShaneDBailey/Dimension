@@ -7,20 +7,25 @@ int main(){
     std::string object_path = "./assets/test.obj";
     std::string material_path = "./assets/test.mtl";
     Model model =  Loader::load_obj(object_path,material_path);
+    model.translate(0,0,0);
     model.find_origin();
 
-    //screen.camera.lookAt(model.getCenterOfOrigin());
+    Camera camera = Camera(Vector3(-20, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, -1), 45.0f, 1.0f , 0.5f, 200.0f);
+    screen.camera = camera;
+    Vector3 light_direction{-1, 0, 0};
+    light_direction = normalize(light_direction);
+    screen.light_direction = light_direction;
+
+    
     screen.camera.setForward(model.get_center_of_origin()-screen.camera.getPosition());
     screen.camera.updateViews();
-    //screen.camera.setProjectionMatrix();
-    
     screen.camera.printFrustumWorldBounds();
-    Vector3 teast = Vector3(1,5,10);
 
     while(true){
         screen.clear_display();
-        model.rotate_around_point(0.01,0.02,0.03,teast);
-        screen.render_model(model);
+        model.rotate(0.01,0.02,0.03);
+
+        screen.render_model_gourand(model);
         SDL_RenderPresent(screen.renderer);
         screen.input();
         SDL_Delay(30);

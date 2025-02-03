@@ -88,6 +88,7 @@ void Model::translate(float x, float y, float z) {
 
 //-------------------------------------Getters----------------------------------------------------
 const std::vector<Vector3>& Model::get_vertices() const { return vertices;}
+const std::vector<std::vector<int>>& Model::get_vertex_info() const {return vertices_info;};
 const std::vector<Vector3>& Model::get_normals() const { return normals;}
 const std::vector<Face>& Model::get_faces() const { return faces;}
 std::vector<Material> Model::get_materials() const {return materials;}
@@ -101,3 +102,16 @@ void Model::add_face(Face face){this->faces.push_back(face);}
 void Model::add_normal(Vector3 normal){this->normals.push_back(normal);}
 void Model::add_material(Material material){this->materials.push_back(material);}
 void Model::add_texture(Vertex_Texture vertex_texture){this->textures.push_back(vertex_texture);}
+
+
+void Model::add_vertex_face_info(int vertex_index, int face_index) {
+    // If the vertex_index is greater than or equal to the current size,
+    // resize the vector to make sure it can accommodate the new vertex_index
+    if (vertex_index >= vertices_info.size()) {
+        vertices_info.resize(vertex_index + 1); // Resize to accommodate the new index
+    }
+
+    // Add the face index to the specified vertex
+    vertices_info[vertex_index].push_back(face_index);
+}
+

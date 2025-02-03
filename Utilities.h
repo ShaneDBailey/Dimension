@@ -1,7 +1,7 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-#include<tuple>
+#include <tuple>
 #include <cmath>
 #include <iostream>
 
@@ -9,8 +9,39 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 640;
 
 struct Color {
-    float r,g,b,a;
+    float r, g, b, a;
+
+    Color operator+(const Color& other) const {
+        return Color{
+            r + other.r, 
+            g + other.g, 
+            b + other.b, 
+            a + other.a
+        };
+    }
+
+    Color operator*(float scalar) const {
+        return Color{
+            r * scalar, 
+            g * scalar, 
+            b * scalar, 
+            a * scalar
+        };
+    }
+    Color operator/(float scalar) const {
+        return Color{
+            r / scalar, 
+            g / scalar, 
+            b / scalar, 
+            a / scalar
+        };
+    }
+    friend std::ostream& operator<<(std::ostream& os, const Color& color) {
+        os << "(" << color.r << ", " << color.g << ", " << color.b << ")";
+        return os;
+    }
 };
+
 
 
 struct Vector3 {
@@ -43,6 +74,10 @@ struct Vector3 {
 
     Vector3 operator*(float scalar) const {
         return Vector3(x * scalar, y * scalar, z * scalar);
+    }
+
+    float dot(const Vector3& other) const {
+        return x * other.x + y * other.y + z * other.z;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Vector3& vec) {
@@ -105,11 +140,15 @@ struct Matrix4{
 Vector4 matrix_transform(const Matrix4& mat, const Vector4& vec);
 Vector4 to_vector4(const Vector3& vec);
 
-float barycentric_interpolation(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
+float barycentric_interpolation_z_value(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
+Vector3 barycentric_interpolation_weights(int x, int y, Vector3 vertex_0, Vector3 vertex_1, Vector3 vertex_2);
+
 float dot_product(const Vector3& v1, const Vector3& v2);
 Vector3 cross_product(const Vector3& v1, const Vector3& v2);
 Vector3 normalize(const Vector3& v);
 bool is_point_inside_triangle(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
-std::tuple<float, float, float> barycentric_weights(int x, int y, const Vector3& v0, const Vector3& v1, const Vector3& v2);
+Vector3 reflect(const Vector3& incident, const Vector3& normal);
+
+
 
 #endif

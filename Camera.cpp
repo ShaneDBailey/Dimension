@@ -1,5 +1,6 @@
 #include "Camera.h"
 
+Camera::Camera(){}
 Camera::Camera(Vector3 position, Vector3 up, Vector3 forward, float fov, float aspectRatio, float nearPlane, float farPlane)
     : position(position), up(up), forward(forward), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {
     
@@ -62,41 +63,6 @@ void Camera::defineViewingVolume() {
     ViewingVolume.far_corners[1] = centerFar + (right * farWidth * 0.5f) + (up * farHeight * 0.5f);
     ViewingVolume.far_corners[2] = centerFar - (right * farWidth * 0.5f) + (up * farHeight * 0.5f);
     ViewingVolume.far_corners[3] = centerFar - (right * farWidth * 0.5f) - (up * farHeight * 0.5f);
-}
-
-bool Camera::is_point_in_viewing_volume(const Vector3& point) const {
-    // This function checks if the given point lies within the viewing frustum
-    // We do this by testing the point against the six planes (left, right, top, bottom, near, far)
-
-    // Plane normal directions are derived from cross products of frustum edges
-    // Near and Far planes
-    Vector3 nearNormal = normalize(cross_product(ViewingVolume.close_corners[1] - ViewingVolume.close_corners[0],
-                                                 ViewingVolume.close_corners[2] - ViewingVolume.close_corners[0]));
-    Vector3 farNormal = normalize(cross_product(ViewingVolume.far_corners[1] - ViewingVolume.far_corners[0],
-                                                ViewingVolume.far_corners[2] - ViewingVolume.far_corners[0]));
-
-    // Check if the point is behind the near or far plane
-    if (dot_product(nearNormal, point - position) > 0.0f || dot_product(farNormal, point - position) < 0.0f) {
-        return false;
-    }
-
-    // For left, right, top, and bottom planes
-    for (int i = 0; i < 4; ++i) {
-        // Compute edge vectors for the near and far planes
-        Vector3 edgeNear = ViewingVolume.close_corners[(i + 1) % 4] - ViewingVolume.close_corners[i];
-        Vector3 edgeFar = ViewingVolume.far_corners[(i + 1) % 4] - ViewingVolume.far_corners[i];
-
-        // Calculate the normal of the planes
-        Vector3 normalNear = normalize(cross_product(edgeNear, ViewingVolume.close_corners[i] - point));
-        Vector3 normalFar = normalize(cross_product(edgeFar, ViewingVolume.far_corners[i] - point));
-
-        // Check if the point is inside all planes
-        if (dot_product(normalNear, forward) > 0.0f || dot_product(normalFar, forward) > 0.0f) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 void Camera::updateViews(){

@@ -25,11 +25,12 @@ private:
     Frustum ViewingVolume;   
 
 public:
+    Camera();
     Camera(Vector3 position, Vector3 up, Vector3 forward, float fov, float aspectRatio, float nearPlane, float farPlane);
 
     const Vector3& getPosition() const { return position; }
-    const Vector3& getForward() const { return forward; }
     const Vector3& getUp() const { return up; }
+    const Vector3& getForward() const { return forward; }
     const Vector3& getRight() const { return right; }
     Matrix4 getViewMatrix() const{return viewMatrix;}
     Matrix4 getProjectionMatrix() const {return projectionMatrix;}
@@ -49,8 +50,6 @@ public:
     void setProjectionMatrix();
     void updateViews();
 
-
-    bool is_point_in_viewing_volume(const Vector3& point) const;
     void printFrustumWorldBounds();
 };
 
