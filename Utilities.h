@@ -132,6 +132,21 @@ struct Matrix4{
             }
         }
     }
+
+    Matrix4 operator*(const Matrix4& other) const {
+        Matrix4 result;
+
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                result.matrix[i][j] = 0.0f;
+                for (int k = 0; k < 4; ++k) {
+                    result.matrix[i][j] += this->matrix[i][k] * other.matrix[k][j];
+                }
+            }
+        }
+
+        return result;
+    }
     
 };
 
