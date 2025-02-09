@@ -6,7 +6,7 @@ Screen::Screen() {
     SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer);
     for (int i = 0; i < SCREEN_WIDTH; ++i) {
         for (int j = 0; j < SCREEN_HEIGHT; ++j) {
-            zBuffer[i][j] = std::numeric_limits<float>::max();
+            z_buffer[i][j] = std::numeric_limits<float>::max();
         }
     }
 }
@@ -22,7 +22,7 @@ void Screen::clear_display() {
     SDL_RenderClear(renderer);
     for (int i = 0; i < SCREEN_WIDTH; ++i) {
         for (int j = 0; j < SCREEN_HEIGHT; ++j) {
-            zBuffer[i][j] = std::numeric_limits<float>::max();
+            z_buffer[i][j] = std::numeric_limits<float>::max();
         }
     }
 }
@@ -40,15 +40,15 @@ void Screen::render_model(const Model& model) {
 
     for(const auto& face : model.get_faces()){
         //grab vertices, and transform them so that the camera is at 0,0,0, converted to homenzgous vector 4 for matrix math
-        Vector4 vertex_0_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[0]])); 
-        Vector4 vertex_1_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[1]])); 
-        Vector4 vertex_2_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[2]])); 
+        Vector4 vertex_0_4 = matrix_transform(camera.get_view_matrix(), to_vector4(model.get_vertices()[face.vertex_index[0]])); 
+        Vector4 vertex_1_4 = matrix_transform(camera.get_view_matrix(), to_vector4(model.get_vertices()[face.vertex_index[1]])); 
+        Vector4 vertex_2_4 = matrix_transform(camera.get_view_matrix(), to_vector4(model.get_vertices()[face.vertex_index[2]])); 
 
         // project the coned frustrum so it is in a cube shape, this will give the appearance of objects closer to camera being bigger
         //and objects farther away being smaller
-        vertex_0_4 = matrix_transform(camera.getProjectionMatrix(), vertex_0_4);
-        vertex_1_4 = matrix_transform(camera.getProjectionMatrix(), vertex_1_4);
-        vertex_2_4 = matrix_transform(camera.getProjectionMatrix(), vertex_2_4);
+        vertex_0_4 = matrix_transform(camera.get_projection_matrix(), vertex_0_4);
+        vertex_1_4 = matrix_transform(camera.get_projection_matrix(), vertex_1_4);
+        vertex_2_4 = matrix_transform(camera.get_projection_matrix(), vertex_2_4);
 
         // normalizes the cube to be a 1 by 1 by 1
         Vector3 vertex_0 = {vertex_0_4.x / vertex_0_4.w, vertex_0_4.y / vertex_0_4.w, vertex_0_4.z / vertex_0_4.w};
@@ -56,9 +56,9 @@ void Screen::render_model(const Model& model) {
         Vector3 vertex_2 = {vertex_2_4.x / vertex_2_4.w, vertex_2_4.y / vertex_2_4.w, vertex_2_4.z / vertex_2_4.w};
 
         //maps the 1 by 1 by cuber to the screen
-        float z_0 = dot_product(camera.getForward(), vertex_0); 
-        float z_1 = dot_product(camera.getForward(), vertex_1);
-        float z_2 = dot_product(camera.getForward(), vertex_2);
+        float z_0 = dot_product(camera.get_forward(), vertex_0); 
+        float z_1 = dot_product(camera.get_forward(), vertex_1);
+        float z_2 = dot_product(camera.get_forward(), vertex_2);
 
         vertex_0.z = z_0;
         vertex_1.z = z_1;
@@ -101,8 +101,8 @@ void Screen::render_model(const Model& model) {
             for (int x = min_x; x <= max_x; ++x) {
                 if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) {//check if the pixel from the area to render is in the triangle
                     float z = barycentric_interpolation_z_value(x, y, vertex_0, vertex_1, vertex_2);//determine z depth on all points as only the vertexes have a z value
-                    if (z < zBuffer[x][y]) {//check the zbuffer if its on top render that pixel and store it
-                        zBuffer[x][y] = z;
+                    if (z < z_buffer[x][y]) {//check the z_buffer if its on top render that pixel and store it
+                        z_buffer[x][y] = z;
                         SDL_RenderDrawPointF(renderer, x, y);
                     }
                 }
@@ -114,18 +114,12 @@ void Screen::render_model(const Model& model) {
 
 void Screen::render_model_gourand(const Model& model){
 
-
+    Matrix4 all_transforms = camera.get_projection_matrix() * camera.get_view_matrix();
     for(const auto& face : model.get_faces()){
         //grab vertices, and transform them so that the camera is at 0,0,0, converted to homenzgous vector 4 for matrix math
-        Vector4 vertex_0_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[0] ])); 
-        Vector4 vertex_1_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[1] ])); 
-        Vector4 vertex_2_4 = matrix_transform(camera.getViewMatrix(), to_vector4(model.get_vertices()[face.vertex_index[2] ])); 
-
-        // project the coned frustrum so it is in a cube shape, this will give the appearance of objects closer to camera being bigger
-        //and objects farther away being smaller
-        vertex_0_4 = matrix_transform(camera.getProjectionMatrix(), vertex_0_4);
-        vertex_1_4 = matrix_transform(camera.getProjectionMatrix(), vertex_1_4);
-        vertex_2_4 = matrix_transform(camera.getProjectionMatrix(), vertex_2_4);
+        Vector4 vertex_0_4 = matrix_transform(all_transforms, to_vector4(model.get_vertices()[face.vertex_index[0] ])); 
+        Vector4 vertex_1_4 = matrix_transform(all_transforms, to_vector4(model.get_vertices()[face.vertex_index[1] ])); 
+        Vector4 vertex_2_4 = matrix_transform(all_transforms, to_vector4(model.get_vertices()[face.vertex_index[2] ])); 
 
         // normalizes the cube to be a 1 by 1 by 1
         Vector3 vertex_0 = {vertex_0_4.x / vertex_0_4.w, vertex_0_4.y / vertex_0_4.w, vertex_0_4.z / vertex_0_4.w};
@@ -133,9 +127,9 @@ void Screen::render_model_gourand(const Model& model){
         Vector3 vertex_2 = {vertex_2_4.x / vertex_2_4.w, vertex_2_4.y / vertex_2_4.w, vertex_2_4.z / vertex_2_4.w};
 
         //maps the 1 by 1 by cuber to the screen
-        float z_0 = dot_product(camera.getForward(), vertex_0); 
-        float z_1 = dot_product(camera.getForward(), vertex_1);
-        float z_2 = dot_product(camera.getForward(), vertex_2);
+        float z_0 = dot_product(camera.get_forward(), vertex_0); 
+        float z_1 = dot_product(camera.get_forward(), vertex_1);
+        float z_2 = dot_product(camera.get_forward(), vertex_2);
 
         vertex_0.z = z_0;
         vertex_1.z = z_1;
@@ -157,9 +151,6 @@ void Screen::render_model_gourand(const Model& model){
             vertex_2.z
         );
 
-        //const Vector3& normal_0 = normalize(model.get_vertices()[face.vertex_index[0] ]);
-        //const Vector3& normal_1 = normalize(model.get_vertices()[face.vertex_index[1] ]);
-        //const Vector3& normal_2 = normalize(model.get_vertices()[face.vertex_index[2] ]);
         Vector3 normal_0 = Vector3();
         for (int face_index : model.get_vertex_info()[face.vertex_index[0] ]) {
             normal_0 = normal_0 + model.get_normals()[face_index];
@@ -201,10 +192,9 @@ void Screen::render_model_gourand(const Model& model){
          for (int y = min_y; y <= max_y; ++y) {
             for (int x = min_x; x <= max_x; ++x) {
                 if (is_point_inside_triangle(x, y, vertex_0, vertex_1, vertex_2)) {//check if the pixel from the area to render is in the triangle
-                    float z = barycentric_interpolation_z_value(x, y, vertex_0, vertex_1, vertex_2);//determine z depth on all points as only the vertexes have a z value
-                    //todo redo the z based on camera - point??
-                    if (z < zBuffer[x][y]) {//check the zbuffer if its on top render that pixel and store it
-                        zBuffer[x][y] = z;
+                    float z = barycentric_interpolation_z_value(x, y, vertex_0, vertex_1, vertex_2);
+                    if (z < z_buffer[x][y]) {//check the z_buffer if its on top render that pixel and store it
+                        z_buffer[x][y] = z;
 
                         Vector3 weights = barycentric_interpolation_weights(x, y, vertex_0, vertex_1, vertex_2);
                         Color interpolated_color = color_0 * weights.z + color_1 * weights.x + color_2 * weights.y;
