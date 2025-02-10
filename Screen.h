@@ -15,7 +15,7 @@ private:
     SDL_Event event;
     SDL_Window* window;
     std::vector<SDL_FPoint> points;
-    float zBuffer[SCREEN_WIDTH][SCREEN_HEIGHT];
+    float z_buffer[SCREEN_WIDTH][SCREEN_HEIGHT];
 
 public:
     Camera camera;

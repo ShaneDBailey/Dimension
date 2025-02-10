@@ -17,9 +17,9 @@ int main(){
     screen.light_direction = light_direction;
 
     
-    screen.camera.setForward(model.get_center_of_origin()-screen.camera.getPosition());
-    screen.camera.updateViews();
-    screen.camera.printFrustumWorldBounds();
+    screen.camera.set_forward(model.get_center_of_origin()-screen.camera.get_position());
+    screen.camera.update_views();
+    screen.camera.print_frustum_world_bounds();
 
     while(true){
         screen.clear_display();

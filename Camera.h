@@ -16,41 +16,41 @@ private:
     Vector3 up;          //direction in world space
     Vector3 forward;     //vector in which the camera is looking
     Vector3 right;       
-    Matrix4 viewMatrix;      //the view in which objects are bigger the closer they are to the camera
-    Matrix4 projectionMatrix; //adjusts the frusturm so it appears to look like a cube and that objects are not distorted
+    Matrix4 view_matrix;      //the view in which objects are bigger the closer they are to the camera
+    Matrix4 projection_matrix; //adjusts the frusturm so it appears to look like a cube and that objects are not distorted
     float fov;           
-    float aspectRatio;   
-    float nearPlane;     
-    float farPlane;   
-    Frustum ViewingVolume;   
+    float aspect_ratio;   
+    float near_plane;     
+    float far_plane;   
+    Frustum viewing_volume;   
 
 public:
     Camera();
     Camera(Vector3 position, Vector3 up, Vector3 forward, float fov, float aspectRatio, float nearPlane, float farPlane);
 
-    const Vector3& getPosition() const { return position; }
-    const Vector3& getUp() const { return up; }
-    const Vector3& getForward() const { return forward; }
-    const Vector3& getRight() const { return right; }
-    Matrix4 getViewMatrix() const{return viewMatrix;}
-    Matrix4 getProjectionMatrix() const {return projectionMatrix;}
-    float getFOV() const { return fov; }
-    float getAspectRatio() const { return aspectRatio; }
-    float getNearPlane() const { return nearPlane; }
-    float getFarPlane() const { return farPlane; }
-    Frustum getViewingVolume() const{return ViewingVolume;}
+    const Vector3& get_position() const { return position; }
+    const Vector3& get_up() const { return up; }
+    const Vector3& get_forward() const { return forward; }
+    const Vector3& get_right() const { return right; }
+    Matrix4 get_view_matrix() const{return view_matrix;}
+    Matrix4 get_projection_matrix() const {return projection_matrix;}
+    float get_FOV() const { return fov; }
+    float get_aspect_ratio() const { return aspect_ratio; }
+    float get_near_plane() const { return near_plane; }
+    float get_far_plane() const { return far_plane; }
+    Frustum get_viewing_volume() const{return viewing_volume;}
 
-    void setPosition(const Vector3& newPosition) { position = newPosition; }
-    void setForward(const Vector3& newForward) { forward = newForward; }
-    void setUp(const Vector3& newUp) { up = newUp; }
-    void setRight(const Vector3& newRight) { right = newRight; }
+    void set_position(const Vector3& new_position) { position = new_position; }
+    void set_forward(const Vector3& new_forward) { forward = new_forward; }
+    void set_up(const Vector3& new_up) { up = new_up; }
+    void set_right(const Vector3& new_right) { right = new_right; }
 
-    void defineViewingVolume(); 
-    void setViewMatrix();
-    void setProjectionMatrix();
-    void updateViews();
+    void define_viewing_volume(); 
+    void set_view_matrix();
+    void set_projection_matrix();
+    void update_views();
 
-    void printFrustumWorldBounds();
+    void print_frustum_world_bounds();
 };
 
 #endif
